@@ -38,6 +38,8 @@ export default function RegisterPage(props) {
       if (!response.ok) {
         throw new Error("Failed to sign up");
       }
+      const { token } = await response.json();
+      localStorage.setItem('authToken', token);
       window.location.href = "/create";
     } catch (err) {
       setError(err.message);
@@ -45,7 +47,7 @@ export default function RegisterPage(props) {
   };
 
   const handleRedirectToLogin = () => {
-    window.location.href = "/login";
+    window.location.href = "/api/login";
   }
 
   return (

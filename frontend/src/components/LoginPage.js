@@ -34,6 +34,8 @@ export default function LoginPage(props) {
       if (!response.ok) {
         throw new Error("Failed to login");
       }
+      const { token } = await response.json();
+      localStorage.setItem('authToken', token);
       window.location.href = "/create";
     } catch (err) {
       setError(err.message);
