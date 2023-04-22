@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import RegisterPage from "./RegisterPage";
 import LoginPage from "./LoginPage";
-// import CreateNetPage from
+import CreateNetPage from "./CreateNetPage";
 
 import {
     BrowserRouter as Router,
@@ -45,6 +45,7 @@ export default function HomePage(props) {
                 />
                 <Route path="/sign-up" element={RegisterPage()} />
                 <Route path="/login" element={LoginPage()} />
+                <Route path="/create" element={CreateNetPage()} />
             </Routes>
         </Router>
     );
