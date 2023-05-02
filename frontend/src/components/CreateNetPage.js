@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from "@mui/material/IconButton";
@@ -17,6 +19,7 @@ import Select from '@mui/material/Select';
 const theme = createTheme();
 
 export default function CreateNetPage(props) {
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [file, setFile] = useState(null);
     const [inputFields, setInputFields] = useState([
@@ -38,11 +41,31 @@ export default function CreateNetPage(props) {
                 'Content-Type': 'application/json',
             },
         })
-        .then((response) => response.json())
+        .then((response) => {
+            if (response.status === 401) {
+                localStorage.removeItem("authToken");
+                navigate("/");
+            }
+            return response.json();
+        })
         .then((data) => setUser(data.user))
-        .catch((error) => console.error(error));
-    }, []);
+        .catch((error) => console.log(error));
+    }, [navigate]);
 
+    const handleLogout = () => {
+        const authToken = localStorage.getItem("authToken");
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                Authorization: `Token ${authToken}`,
+            }
+        }
+        fetch("/api/logout", requestOptions)
+        .then(() => {
+            localStorage.removeItem("authToken");
+            navigate("/");
+        });
+    }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -71,7 +94,7 @@ export default function CreateNetPage(props) {
             if (!response.ok) {
                 throw new Error("NIE JEST DOBRZE");
             }
-            // window.location.href = "";
+            // navigate();
         } catch(err) {
             setError(err.message);
         }

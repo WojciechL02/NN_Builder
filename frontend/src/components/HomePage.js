@@ -16,7 +16,7 @@ export default function HomePage(props) {
 
     function renderHomePage() {
         return (
-            <Grid container spacing={3}>
+            <Grid container alignItems="center" spacing={3}>
                 <Grid item xs={12} align="center">
                     <Typography variant="h3" compact="h3">
                         Build Your Custom Neural Network
@@ -43,9 +43,9 @@ export default function HomePage(props) {
                     exact path="/"
                     element={renderHomePage()}
                 />
-                <Route path="/sign-up" element={RegisterPage()} />
-                <Route path="/login" element={LoginPage()} />
-                <Route path="/create" element={CreateNetPage()} />
+                <Route path="/sign-up" element={<RegisterPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/create" element={<CreateNetPage />} />
             </Routes>
         </Router>
     );
