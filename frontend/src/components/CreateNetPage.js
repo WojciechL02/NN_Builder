@@ -7,12 +7,11 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Container, Grid, TextField } from "@mui/material";
+import { AppBar, GlobalStyles, Grid, TextField, Toolbar } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid';
 
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
 const theme = createTheme();
@@ -23,9 +22,11 @@ export default function CreateNetPage(props) {
     const [inputFields, setInputFields] = useState([
         {id: uuidv4(), input: "", output: ""},
     ]);
-    const [task, setTask] = useState("");
-    const [optimizer, setOptimizer] = useState("");
-    const [learningRate, setLearningRate] = useState("");
+    const [epochs, setEpochs] = useState(0);
+    const [loss, setLoss] = useState(0);
+    const [optimizer, setOptimizer] = useState(0);
+    const [learningRate, setLearningRate] = useState(0);
+    const [batch, setBatch] = useState(0);
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -42,6 +43,7 @@ export default function CreateNetPage(props) {
         .catch((error) => console.error(error));
     }, []);
 
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
@@ -51,24 +53,20 @@ export default function CreateNetPage(props) {
 
             const authToken = localStorage.getItem('authToken');
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('task', task);
+            formData.append('loss', loss);
             formData.append('optimizer', optimizer);
             formData.append('lr', learningRate);
-            formData.append('layers', inputFields);
+            formData.append('epochs', epochs)
+            formData.append('batch', batch)
+            // formData.append('layers', inputFields);
 
             const requestOptions = {
                 method: "POST",
                 headers: {
                     Authorization: `Token ${authToken}`,
-                    "enctype": "multipart/form-data",
                 },
-                body: {
-                    file: file,
-                    task: task,
-                },
+                body: formData,
             }
-            console.log(requestOptions["body"]);
             const response = await fetch("/api/create", requestOptions);
             if (!response.ok) {
                 throw new Error("NIE JEST DOBRZE");
@@ -110,15 +108,7 @@ export default function CreateNetPage(props) {
         setInputFields([...inputFields, {id: uuidv4(), input: "", output: ""}]);
     }
 
-    function getFileExtension(filename) {
-        const extension = filename.split('.').pop();
-        return extension;
-    }
-
     function validateFile(file) {
-        if (getFileExtension(file["name"]) != "txt") {
-            return false;
-        }
         if (file["size"] > 2000000) {
             return false;
         }
@@ -134,116 +124,172 @@ export default function CreateNetPage(props) {
         }
     }
 
-    const handleTaskChange = (event) => {
-        setTask(event.target.value);
-    }
-
-    const handleOptimizerChange = (event) => {
-        setOptimizer(event.target.value);
-    }
-
-    const handleChangeLR = (event) => {
-        setLearningRate(event.target.value);
-    }
-
     return (
         <ThemeProvider theme={theme}>
-            <Container>
-                <CssBaseline />
-                <Box display="flex" justifyContent="flex-end" alignItems="flex-end">
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Customize your NN
+            <GlobalStyles styles={{ ul: { margin: 0, padding: 0, listStyle: 'none' } }} />
+            <CssBaseline />
+            <AppBar
+                position="static"
+                color="default"
+                elevation={0}
+                sx={{ borderBottom: (theme) => `1px solid &{theme.palette.divider}` }}
+            >
+                <Toolbar sx={{ flexWrap: "wrap" }}>
+                    <Typography variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
+                        NN Builder
                     </Typography>
-                    <Button color="inherit">
+                    <Button variant="outlined" sx={{ my: 1, mx: 1.5 }} onClick={handleLogout}>
                         Logout
                     </Button>
-                </Box>
-                <Box sx={{marginTop: 4, display: "flex", flexDirection: "column"}}>
-                    <Box component="form" noValidate enctype="multipart/form-data" onSubmit={handleSubmit}>
-                        <Grid item>
+                </Toolbar>
+            </AppBar>
+            <Grid container spacing={2}>
+                <Grid item xs>
+                    <Box
+                        sx={{
+                            marginTop: 8,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Typography component="h1" variant="h5">
+                            Dataset:
+                        </Typography>
+                        <Box sx={{ mt: 3 }}>
                             <Button
                                 variant="contained"
                                 component="label"
                                 onChange={(event) => handleFileUpload(event)}
                                 >
-                                Upload your dataset (.csv)
+                                Choose a file
                                 <input
                                     type="file"
+                                    // accept=".txt"
                                     hidden
                                     required
                                 />
                             </Button>
-                        </Grid>
-                        {inputFields.map(inputField => (
-                            <Grid container direction={"row"} alignItems="center" key={inputField.id}>
-                                <Grid item>
-                                    <Typography component="h1" variant="h5">Linear</Typography>
-                                </Grid>
-                                <Grid itemProp="">
-                                    <TextField required name="input" label="Input" type="number" variant="filled" inputProps={{min: 1,}} onChange={(event) => handleChangeInput(inputField.id, event)} />
-                                </Grid>
-                                <Grid item>
-                                    <TextField required name="output" label="Output" type="number" variant="filled" inputProps={{min: 1,}} onChange={(event) => handleChangeInput(inputField.id, event)} />
-                                </Grid>
-                                <Grid item>
-                                    <IconButton disabled={inputFields.length === 1} onClick={() => handleRemoveLayer(inputField.id)}>
-                                        <RemoveCircleOutlineIcon />
-                                    </IconButton>
-                                </Grid>
-                                <Grid item>
-                                    <IconButton onClick={() => handleAddLayer()}>
-                                        <AddCircleOutlineIcon />
-                                    </IconButton>
-                                </Grid>
-                            </Grid>
-                        ))}
-                        <Grid container direction={"row"} spacing={2} alignItems={"center"}>
-                            <Grid item>
-                                <InputLabel>Optimizer</InputLabel>
-                                <Select
-                                    required
-                                    value={optimizer}
-                                    label="Optimizer"
-                                    onChange={handleOptimizerChange}
-                                >
-                                    <MenuItem value={0}>SGD</MenuItem>
-                                    <MenuItem value={1}>SGD + momentum</MenuItem>
-                                    <MenuItem value={2}>Adam</MenuItem>
-                                    <MenuItem value={3}>NAdam</MenuItem>
-                                    <MenuItem value={4}>AdamW</MenuItem>
-                                    <MenuItem value={5}>Adam</MenuItem>
-                                    <MenuItem value={6}>RMSprop</MenuItem>
-                                    <MenuItem value={7}>Adadelta</MenuItem>
-                                    <MenuItem value={8}>Adagrad</MenuItem>
-                                </Select>
-                            </Grid>
-                            <Grid item>
-                                <InputLabel>Task</InputLabel>
-                                <Select
-                                    required
-                                    value={task}
-                                    label="Task"
-                                    onChange={handleTaskChange}
-                                >
-                                    <MenuItem value={"classification"}>Classification</MenuItem>
-                                    <MenuItem value={"regression"}>Regression</MenuItem>
-                                </Select>
-                            </Grid>
-                            <Grid item>
-                                <TextField required name="lr" label="Learning rate" type="number" variant="filled" onChange={handleChangeLR} />
-                            </Grid>
-                        </Grid>
-                        <Grid item>
-                            <Button variant="contained" color="primary" type="submit">Train model</Button>
-                        </Grid>
-                        {error && (
-                            <Typography color="error" variant="body2">
-                                {error}
+                        </Box>
+                        <Box sx={{ mt: 3 }}>
+                            <Typography variant="h5" fontSize={14} align="left" color="text.secondary" component="div">
+                                <li>File type must be .csv</li>
+                                <li>Max file size is 2MB</li>
+                                <li>Target variable must be named "target".</li>
+                                <li>There should be a header with the column names.</li>
                             </Typography>
-                        )}
+                        </Box>
                     </Box>
-                </Box>
-            </Container>
+                </Grid>
+                <Grid item xs={6}>
+                    <Box
+                        sx={{
+                            marginTop: 8,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Typography component="h1" variant="h5">
+                            Network parameters:
+                        </Typography>
+                        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+                            {inputFields.map(inputField => (
+                                <Grid container item direction={"row"} alignItems="center" key={inputField.id} spacing={1}>
+                                    <Grid item>
+                                        <Typography component="h1" variant="h6">Linear</Typography>
+                                    </Grid>
+                                    <Grid item>
+                                        <TextField required style={{ width: 100 }} name="input" label="Input" type="number" variant="filled" inputProps={{min: 1,}} onChange={(event) => handleChangeInput(inputField.id, event)} />
+                                    </Grid>
+                                    <Grid item>
+                                        <TextField required style={{ width: 100 }} name="output" label="Output" type="number" variant="filled" inputProps={{min: 1,}} onChange={(event) => handleChangeInput(inputField.id, event)} />
+                                    </Grid>
+                                    <Grid item>
+                                        <IconButton disabled={inputFields.length === 1} onClick={() => handleRemoveLayer(inputField.id)}>
+                                            <RemoveCircleOutlineIcon />
+                                        </IconButton>
+                                    </Grid>
+                                    <Grid item>
+                                        <IconButton onClick={() => handleAddLayer()}>
+                                            <AddCircleOutlineIcon />
+                                        </IconButton>
+                                    </Grid>
+                                </Grid>
+                            ))}
+                            <Button variant="contained" color="primary" type="submit">
+                                Train the model
+                            </Button>
+                            {error && (
+                                <Typography color="error" variant="body2">
+                                    {error}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
+                </Grid>
+                <Grid item xs>
+                    <Box
+                        sx={{
+                            marginTop: 8,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Typography component="h1" variant="h5">
+                            Training settings:
+                        </Typography>
+                        <Box sx={{ mt: 3 }}>
+                            <Grid container direction={"column"} spacing={2} alignItems={"center"}>
+                                <Grid item>
+                                    <InputLabel>Loss function</InputLabel>
+                                    <Select
+                                        required
+                                        value={loss}
+                                        label="Loss"
+                                        style={{ width: 180 }}
+                                        onChange={(event) => setLoss(event.target.value)}
+                                    >
+                                        <MenuItem value={0}>CrossEntropy</MenuItem>
+                                        <MenuItem value={1}>MSE</MenuItem>
+                                        <MenuItem value={2}>MAE</MenuItem>
+                                    </Select>
+                                </Grid>
+                                <Grid item>
+                                    <InputLabel>Optimizer</InputLabel>
+                                    <Select
+                                        required
+                                        value={optimizer}
+                                        label="Optimizer"
+                                        style={{ width: 180 }}
+                                        onChange={(event) => setOptimizer(event.target.value)}
+                                    >
+                                        <MenuItem value={0}>SGD</MenuItem>
+                                        <MenuItem value={1}>SGD + momentum</MenuItem>
+                                        <MenuItem value={2}>Adam</MenuItem>
+                                        <MenuItem value={3}>NAdam</MenuItem>
+                                        <MenuItem value={4}>AdamW</MenuItem>
+                                        <MenuItem value={5}>Adam</MenuItem>
+                                        <MenuItem value={6}>RMSprop</MenuItem>
+                                        <MenuItem value={7}>Adadelta</MenuItem>
+                                        <MenuItem value={8}>Adagrad</MenuItem>
+                                    </Select>
+                                </Grid>
+                                <Grid item>
+                                    <TextField required style={{ width: 150 }} name="lr" label="Learning rate" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setLearningRate(event.target.value)} />
+                                </Grid>
+                                <Grid item>
+                                    <TextField required style={{ width: 150 }} name="epochs" label="Epochs" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setEpochs(event.target.value)} />
+                                </Grid>
+                                <Grid item>
+                                    <TextField required style={{ width: 150 }} name="batch" label="Batch size" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setBatch(event.target.value)} />
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    </Box>
+                </Grid>
+            </Grid>
         </ThemeProvider>
     );
 }
