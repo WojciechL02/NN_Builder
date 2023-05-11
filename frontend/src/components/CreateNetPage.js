@@ -23,7 +23,7 @@ export default function CreateNetPage(props) {
     const [user, setUser] = useState(null);
     const [file, setFile] = useState(null);
     const [inputFields, setInputFields] = useState([
-        {id: uuidv4(), input: "", output: ""},
+        {id: uuidv4(), input: 0, output: 0},
     ]);
     const [epochs, setEpochs] = useState(0);
     const [loss, setLoss] = useState(0);
@@ -74,26 +74,10 @@ export default function CreateNetPage(props) {
                 throw new Error("Layer sizes do not match!");
             }
 
-            const authToken = localStorage.getItem('authToken');
-            const formData = new FormData();
-            formData.append('loss', loss);
-            formData.append('optimizer', optimizer);
-            formData.append('lr', learningRate);
-            formData.append('epochs', epochs)
-            formData.append('batch', batch)
-            // formData.append('layers', inputFields);
+            uploadFile();
 
-            const requestOptions = {
-                method: "POST",
-                headers: {
-                    Authorization: `Token ${authToken}`,
-                },
-                body: formData,
-            }
-            const response = await fetch("/api/create", requestOptions);
-            if (!response.ok) {
-                throw new Error("NIE JEST DOBRZE");
-            }
+            sendForm();
+
             // navigate();
         } catch(err) {
             setError(err.message);
@@ -111,10 +95,56 @@ export default function CreateNetPage(props) {
         return true;
     }
 
+    const uploadFile = () => {
+        const authToken = localStorage.getItem('authToken');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                Authorization: `Token ${authToken}`,
+            },
+            body: formData,
+        }
+        fetch("/api/upload", requestOptions)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Wrong file!");
+            }
+        });
+    }
+
+    const sendForm = () => {
+        const authToken = localStorage.getItem('authToken');
+
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                Authorization: `Token ${authToken}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                loss: loss,
+                optimizer: optimizer,
+                lr: learningRate,
+                epochs: epochs,
+                batch: batch,
+                layers: inputFields,
+            }),
+        }
+        fetch("/api/create", requestOptions)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Incorrect form data!");
+            }
+        });
+    }
+
     const handleChangeInput = (id, event) => {
         const newInputFields = inputFields.map(i => {
             if(id === i.id) {
-              i[event.target.name] = event.target.value
+              i[event.target.name] = parseInt(event.target.value)
             }
             return i;
           })
@@ -272,7 +302,7 @@ export default function CreateNetPage(props) {
                                         value={loss}
                                         label="Loss"
                                         style={{ width: 180 }}
-                                        onChange={(event) => setLoss(event.target.value)}
+                                        onChange={(event) => setLoss(parseInt(event.target.value))}
                                     >
                                         <MenuItem value={0}>CrossEntropy</MenuItem>
                                         <MenuItem value={1}>MSE</MenuItem>
@@ -286,7 +316,7 @@ export default function CreateNetPage(props) {
                                         value={optimizer}
                                         label="Optimizer"
                                         style={{ width: 180 }}
-                                        onChange={(event) => setOptimizer(event.target.value)}
+                                        onChange={(event) => setOptimizer(parseInt(event.target.value))}
                                     >
                                         <MenuItem value={0}>SGD</MenuItem>
                                         <MenuItem value={1}>SGD + momentum</MenuItem>
@@ -300,13 +330,13 @@ export default function CreateNetPage(props) {
                                     </Select>
                                 </Grid>
                                 <Grid item>
-                                    <TextField required style={{ width: 150 }} name="lr" label="Learning rate" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setLearningRate(event.target.value)} />
+                                    <TextField required style={{ width: 150 }} name="lr" label="Learning rate" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setLearningRate(parseFloat(event.target.value))} />
                                 </Grid>
                                 <Grid item>
-                                    <TextField required style={{ width: 150 }} name="epochs" label="Epochs" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setEpochs(event.target.value)} />
+                                    <TextField required style={{ width: 150 }} name="epochs" label="Epochs" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setEpochs(parseInt(event.target.value))} />
                                 </Grid>
                                 <Grid item>
-                                    <TextField required style={{ width: 150 }} name="batch" label="Batch size" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setBatch(event.target.value)} />
+                                    <TextField required style={{ width: 150 }} name="batch" label="Batch size" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setBatch(parseInt(event.target.value))} />
                                 </Grid>
                             </Grid>
                         </Box>
