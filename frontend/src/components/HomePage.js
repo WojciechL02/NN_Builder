@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import RegisterPage from "./RegisterPage";
 import LoginPage from "./LoginPage";
 import CreateNetPage from "./CreateNetPage";
+import DashboardPage from "./DashboardPage";
 
 import {
     BrowserRouter as Router,
@@ -11,6 +12,7 @@ import {
     Redirect,
 } from "react-router-dom";
 import { Grid, Button, ButtonGroup, Typography } from "@mui/material";
+
 
 export default function HomePage(props) {
 
@@ -46,6 +48,7 @@ export default function HomePage(props) {
                 <Route path="/sign-up" element={<RegisterPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/create" element={<CreateNetPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
             </Routes>
         </Router>
     );
