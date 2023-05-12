@@ -22,6 +22,7 @@ export default function CreateNetPage(props) {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [file, setFile] = useState(null);
+    const [trainingSize, setTrainingSize] = useState(0);
     const [inputFields, setInputFields] = useState([
         {id: uuidv4(), input: 0, output: 0},
     ]);
@@ -29,6 +30,7 @@ export default function CreateNetPage(props) {
     const [loss, setLoss] = useState(0);
     const [optimizer, setOptimizer] = useState(0);
     const [learningRate, setLearningRate] = useState(0);
+    const [weightDecay, setWeightDecay] = useState(0);
     const [batch, setBatch] = useState(0);
     const [error, setError] = useState(null);
 
@@ -74,11 +76,39 @@ export default function CreateNetPage(props) {
                 throw new Error("Layer sizes do not match!");
             }
 
-            uploadFile();
+            await uploadFile();
 
-            sendForm();
+            await sendForm();
 
-            // navigate();
+            await startTraining();
+
+        } catch(err) {
+            setError(err.message);
+        }
+    }
+
+    const startTraining = () => {
+        try {
+            const authToken = localStorage.getItem("authToken");
+            const requestOptions = {
+                method: "POST",
+                headers: {
+                    Authorization: `Token ${authToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: {},
+            }
+            return fetch("/api/train", requestOptions)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Incorrect form data!");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                navigate("/dashboard", { state: data });
+            });
+
         } catch(err) {
             setError(err.message);
         }
@@ -107,7 +137,7 @@ export default function CreateNetPage(props) {
             },
             body: formData,
         }
-        fetch("/api/upload", requestOptions)
+        return fetch("/api/upload", requestOptions)
         .then((response) => {
             if (!response.ok) {
                 throw new Error("Wrong file!");
@@ -125,15 +155,17 @@ export default function CreateNetPage(props) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                training_size: trainingSize,
                 loss: loss,
                 optimizer: optimizer,
                 lr: learningRate,
+                wd: weightDecay,
                 epochs: epochs,
                 batch: batch,
                 layers: inputFields,
             }),
         }
-        fetch("/api/create", requestOptions)
+        return fetch("/api/create", requestOptions)
         .then((response) => {
             if (!response.ok) {
                 throw new Error("Incorrect form data!");
@@ -218,7 +250,7 @@ export default function CreateNetPage(props) {
                                 Choose a file
                                 <input
                                     type="file"
-                                    // accept=".txt"
+                                    accept=".csv"
                                     hidden
                                     required
                                 />
@@ -230,7 +262,14 @@ export default function CreateNetPage(props) {
                                 <li>Max file size is 2MB</li>
                                 <li>Target variable must be named "target".</li>
                                 <li>There should be a header with the column names.</li>
+                                <li>There can be no missing values (NaN)!</li>
+                                <li>All data should be numeric.</li>
+                                <li>Data should be scaled/normalized.</li>
+                                <li>If it is a classification task, "target" should be mapped to [0...n] values.</li>
                             </Typography>
+                            <Grid item>
+                                <TextField required style={{ width: 150 }} name="t_size" label="Training size" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setTrainingSize(parseFloat(event.target.value))} />
+                            </Grid>
                         </Box>
                     </Box>
                 </Grid>
@@ -271,7 +310,7 @@ export default function CreateNetPage(props) {
                                 </Grid>
                             ))}
                             <Button variant="contained" color="primary" type="submit">
-                                Train the model
+                                Start training
                             </Button>
                             {error && (
                                 <Typography color="error" variant="body2">
@@ -322,15 +361,16 @@ export default function CreateNetPage(props) {
                                         <MenuItem value={1}>SGD + momentum</MenuItem>
                                         <MenuItem value={2}>Adam</MenuItem>
                                         <MenuItem value={3}>NAdam</MenuItem>
-                                        <MenuItem value={4}>AdamW</MenuItem>
-                                        <MenuItem value={5}>Adam</MenuItem>
-                                        <MenuItem value={6}>RMSprop</MenuItem>
-                                        <MenuItem value={7}>Adadelta</MenuItem>
-                                        <MenuItem value={8}>Adagrad</MenuItem>
+                                        <MenuItem value={4}>RMSprop</MenuItem>
+                                        <MenuItem value={5}>Adadelta</MenuItem>
+                                        <MenuItem value={6}>Adagrad</MenuItem>
                                     </Select>
                                 </Grid>
                                 <Grid item>
                                     <TextField required style={{ width: 150 }} name="lr" label="Learning rate" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setLearningRate(parseFloat(event.target.value))} />
+                                </Grid>
+                                <Grid item>
+                                    <TextField required style={{ width: 150 }} name="wd" label="Weight decay" type="number" inputProps={{min: 0,}} variant="filled" onChange={(event) => setWeightDecay(parseFloat(event.target.value))} />
                                 </Grid>
                                 <Grid item>
                                     <TextField required style={{ width: 150 }} name="epochs" label="Epochs" type="number" inputProps={{min: 1,}} variant="filled" onChange={(event) => setEpochs(parseInt(event.target.value))} />
