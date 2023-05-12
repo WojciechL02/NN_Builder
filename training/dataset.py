@@ -11,6 +11,6 @@ class CSVDataset(Dataset):
         return len(self._data)
 
     def __getitem__(self, idx):
-        x = torch.tensor(self._data.drop(['target'], axis=1).values, dtype=torch.float)
-        y = torch.tensor(self._data['target'])
+        x = torch.tensor(self._data.drop(['target'], axis=1).iloc[idx].values, dtype=torch.float)
+        y = torch.tensor(self._data['target'].iloc[idx])
         return x, y
