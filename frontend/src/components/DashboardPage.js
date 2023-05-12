@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -17,6 +17,20 @@ import Scores from "./Scores";
 const theme = createTheme();
 
 export default function DashboardPage(props) {
+
+    const location = useLocation();
+
+    const lossChartData = {
+        'title': 'Loss',
+        'training': location.state['train_loss'],
+        'validation': location.state['val_loss'],
+    };
+
+    const accuracyChartData = {
+        'title': 'Accuracy',
+        'training': location.state['train_accuracy'],
+        'validation': location.state['val_accuracy'],
+    };
 
     return (
         <ThemeProvider theme={theme}>
@@ -67,7 +81,7 @@ export default function DashboardPage(props) {
                             height: 240,
                         }}
                         >
-                            {/* <Chart /> */}
+                            <Chart responseData={lossChartData}/>
                         </Paper>
                     </Grid>
                     {/* Training scores */}
@@ -80,7 +94,7 @@ export default function DashboardPage(props) {
                             height: 240,
                         }}
                         >
-                            <Scores />
+                            <Scores responseData={location.state['test']}/>
                         </Paper>
                     </Grid>
                     {/* Accuracy chart */}
@@ -93,7 +107,7 @@ export default function DashboardPage(props) {
                             height: 240,
                         }}
                         >
-                            {/* <Chart /> */}
+                            <Chart responseData={accuracyChartData}/>
                         </Paper>
                     </Grid>
                     </Grid>
