@@ -2,3 +2,5 @@ node_modules
 *.pyc
 db.sqlite3
 .env
+/datasets
+/nn_models
