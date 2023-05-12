@@ -2,10 +2,12 @@ from django.db import models
 
 
 class NetParamsModel(models.Model):
-    # username = models.CharField(max_length=50)
-    loss = models.CharField(max_length=50)
-    optimizer = models.CharField(max_length=50)
+    username = models.CharField(max_length=50)
+    training_size = models.FloatField()
+    loss = models.IntegerField()
+    optimizer = models.IntegerField()
     lr = models.FloatField()
+    wd = models.FloatField()
     epochs = models.PositiveIntegerField()
     batch = models.PositiveIntegerField()
     layers = models.JSONField()
