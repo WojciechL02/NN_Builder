@@ -7,6 +7,9 @@ import {
   YAxis,
   Label,
   ResponsiveContainer,
+  Legend,
+  CartesianGrid,
+  Tooltip,
 } from "recharts";
 import Title from "./Title";
 
@@ -15,9 +18,10 @@ export default function Chart({ responseData }) {
   const theme = useTheme();
 
   const title = responseData.title;
-  const data = responseData.map((item) => ({
-    epoch: item.epoch,
-    value: item.value,
+  const data = responseData.training.map((item, index) => ({
+    epoch: index + 1,
+    t_v: item,
+    v_v: responseData.validation[index],
   }));
 
   return (
@@ -33,6 +37,7 @@ export default function Chart({ responseData }) {
             left: 24,
           }}
         >
+          <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="epoch"
             stroke={theme.palette.text.secondary}
@@ -54,12 +59,19 @@ export default function Chart({ responseData }) {
               Value
             </Label>
           </YAxis>
+          <Tooltip />
+          <Legend />
           <Line
-            isAnimationActive={false}
             type="monotone"
-            dataKey="amount"
+            dataKey="t_v"
+            name="Training"
             stroke={theme.palette.primary.main}
-            dot={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="v_v"
+            name="Validation"
+            stroke={theme.palette.secondary.main}
           />
         </LineChart>
       </ResponsiveContainer>
