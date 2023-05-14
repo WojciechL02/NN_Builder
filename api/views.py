@@ -3,8 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from rest_framework.authtoken.models import Token
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate, login
 from .serializers import UserSerializer, NetParamsSerializer
@@ -12,10 +11,6 @@ from .forms import UploadFileForm, NetParamsForm
 from .models import NetParamsModel
 from training.main import train_network
 import json
-
-
-def main(request):
-    return HttpResponse("Hello")
 
 
 class RegistrationView(APIView):
@@ -29,13 +24,13 @@ class RegistrationView(APIView):
                 return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 user = serializer.save()
-                token, created = Token.objects.get_or_create(user=user)
-                return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+                login(request, user)
+                return Response({'success': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):
-    authentication_classes = []
+    authentication_classes = (SessionAuthentication,)
     permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
@@ -44,20 +39,18 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'success': 'User logged in successfully'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request, format=None):
-        if request.user.is_authenticated:
-            request.user.auth_token.delete()
-            return Response({}, status=status.HTTP_204_NO_CONTENT)
-        return Response({'error': 'Authentication error'}, status=status.HTTP_401_UNAUTHORIZED)
+        request.session.flush()
+        return Response({'success': 'User logged out successfully'}, status=status.HTTP_200_OK)
+        # return Response({'error': 'Authentication error'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 def handle_uploaded_file(f, file_name):
@@ -67,19 +60,24 @@ def handle_uploaded_file(f, file_name):
 
 
 class UploadFileView(APIView):
-    parser_classes = [MultiPartParser]
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser,)
 
     def post(self, request, format=None):
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            handle_uploaded_file(request.FILES['file'], file_name=str(request.user))
-            return Response({}, status=status.HTTP_201_CREATED)
-        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_authenticated:
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                handle_uploaded_file(request.FILES['file'], file_name=str(request.user))
+                return Response({}, status=status.HTTP_201_CREATED)
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CreateNetView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = (IsAuthenticated,)
     form_class = NetParamsForm
     serializer_class = NetParamsSerializer
 
@@ -122,8 +120,8 @@ class CreateNetView(APIView):
 
 
 class TrainNetView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
         if request.user.is_authenticated:
