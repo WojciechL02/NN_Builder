@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from "react";
+import { useLocation } from "react-router-dom";
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -13,6 +13,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import Chart from "./Chart";
 import Scores from "./Scores";
+
+import { handleLogout } from './utils.js';
 
 const theme = createTheme();
 
@@ -51,7 +53,7 @@ export default function DashboardPage(props) {
                         >
                             Training results
                         </Typography>
-                        <Button variant="contained" sx={{ my: 1, mx: 1.5 }}>
+                        <Button variant="contained" sx={{ my: 1, mx: 1.5 }} onClick={handleLogout}>
                             Logout
                         </Button>
                     </Toolbar>
