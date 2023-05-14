@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   CssBaseline,
@@ -14,6 +15,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 const theme = createTheme();
 
 export default function RegisterPage(props) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,16 +40,14 @@ export default function RegisterPage(props) {
       if (!response.ok) {
         throw new Error("Failed to sign up");
       }
-      const { token } = await response.json();
-      localStorage.setItem('authToken', token);
-      window.location.href = "/create";
+      navigate("/create");
     } catch (err) {
       setError(err.message);
     }
   };
 
   const handleRedirectToLogin = () => {
-    window.location.href = "/api/login";
+    navigate("/login");
   }
 
   return (

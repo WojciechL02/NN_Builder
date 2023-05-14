@@ -16,6 +16,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 
+import { getCookie, handleLogout } from './utils.js';
+
 const theme = createTheme();
 
 export default function CreateNetPage(props) {
@@ -35,17 +37,14 @@ export default function CreateNetPage(props) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const authToken = localStorage.getItem('authToken');
         fetch("/api/create", {
             method: "GET",
             headers: {
-                Authorization: `Token ${authToken}`,
                 'Content-Type': 'application/json',
             },
         })
         .then((response) => {
-            if (response.status === 401) {
-                localStorage.removeItem("authToken");
+            if (!response.ok) {
                 navigate("/");
             }
             return response.json();
@@ -53,21 +52,6 @@ export default function CreateNetPage(props) {
         .then((data) => setUser(data.user))
         .catch((error) => console.log(error));
     }, [navigate]);
-
-    const handleLogout = () => {
-        const authToken = localStorage.getItem("authToken");
-        const requestOptions = {
-            method: "POST",
-            headers: {
-                Authorization: `Token ${authToken}`,
-            }
-        }
-        fetch("/api/logout", requestOptions)
-        .then(() => {
-            localStorage.removeItem("authToken");
-            navigate("/");
-        });
-    }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -89,14 +73,13 @@ export default function CreateNetPage(props) {
 
     const startTraining = () => {
         try {
-            const authToken = localStorage.getItem("authToken");
             const requestOptions = {
                 method: "POST",
                 headers: {
-                    Authorization: `Token ${authToken}`,
                     "Content-Type": "application/json",
+                    'X-CSRFToken': getCookie("csrftoken"),
                 },
-                body: {},
+                body: JSON.stringify({}),
             }
             return fetch("/api/train", requestOptions)
             .then((response) => {
@@ -126,14 +109,13 @@ export default function CreateNetPage(props) {
     }
 
     const uploadFile = () => {
-        const authToken = localStorage.getItem('authToken');
         const formData = new FormData();
         formData.append('file', file);
 
         const requestOptions = {
             method: "POST",
             headers: {
-                Authorization: `Token ${authToken}`,
+                'X-CSRFToken': getCookie("csrftoken"),
             },
             body: formData,
         }
@@ -146,13 +128,12 @@ export default function CreateNetPage(props) {
     }
 
     const sendForm = () => {
-        const authToken = localStorage.getItem('authToken');
 
         const requestOptions = {
             method: "POST",
             headers: {
-                Authorization: `Token ${authToken}`,
                 "Content-Type": "application/json",
+                'X-CSRFToken': getCookie("csrftoken"),
             },
             body: JSON.stringify({
                 training_size: trainingSize,
@@ -168,6 +149,8 @@ export default function CreateNetPage(props) {
         return fetch("/api/create", requestOptions)
         .then((response) => {
             if (!response.ok) {
+                console.log(response.body);
+                console.log("PROBLEM");
                 throw new Error("Incorrect form data!");
             }
         });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import RegisterPage from "./RegisterPage";
 import LoginPage from "./LoginPage";
 import CreateNetPage from "./CreateNetPage";
@@ -9,7 +9,6 @@ import {
     Routes,
     Route,
     Link,
-    Redirect,
 } from "react-router-dom";
 import { Grid, Button, ButtonGroup, Typography } from "@mui/material";
 

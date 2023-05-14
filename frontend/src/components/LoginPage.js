@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   CssBaseline,
@@ -11,20 +12,25 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+import { getCookie } from './utils.js';
+
 const theme = createTheme();
 
 export default function LoginPage(props) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const csrfToken = getCookie("csrftoken");
     try {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          'X-CSRFToken': csrfToken,
         },
         body: JSON.stringify({
           username,
@@ -34,16 +40,14 @@ export default function LoginPage(props) {
       if (!response.ok) {
         throw new Error("Failed to login");
       }
-      const { token } = await response.json();
-      localStorage.setItem('authToken', token);
-      window.location.href = "/create";
+      navigate('/create');
     } catch (err) {
       setError(err.message);
     }
   };
 
   const handleRedirectToRegister = () => {
-    window.location.href = "/sign-up";
+    navigate('/sign-up');
   }
 
   return (
