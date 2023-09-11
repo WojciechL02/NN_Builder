@@ -44,6 +44,8 @@ export default function Chart({ responseData }) {
             style={theme.typography.body2}
           />
           <YAxis
+            scale={"log"}
+            domain={["auto"]}
             stroke={theme.palette.text.secondary}
             style={theme.typography.body2}
           >
