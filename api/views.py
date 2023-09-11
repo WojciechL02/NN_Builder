@@ -1,16 +1,17 @@
-from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.http import FileResponse
 from django.contrib.auth import authenticate, login
 from .serializers import UserSerializer, NetParamsSerializer
 from .forms import UploadFileForm, NetParamsForm
 from .models import NetParamsModel
 from training.main import train_network
 import json
+import os
 
 
 class RegistrationView(APIView):
@@ -71,6 +72,24 @@ class UploadFileView(APIView):
                 handle_uploaded_file(request.FILES['file'], file_name=str(request.user))
                 return Response({}, status=status.HTTP_201_CREATED)
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class DownloadModelView(APIView):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        if request.user.is_authenticated:
+            username = request.user.username
+            file_path = os.path.join('nn_models', f'{username}.pth')
+            print(file_path)
+
+            if os.path.exists(file_path):
+                return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"model_{username}.pth")
+            else:
+                return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
