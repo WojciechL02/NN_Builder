@@ -5,18 +5,20 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from "@mui/material/IconButton";
 import Button from '@mui/material/Button';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { AppBar, GlobalStyles, Grid, TextField, Toolbar } from "@mui/material";
-import { v4 as uuidv4 } from 'uuid';
-
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+import { AppBar, GlobalStyles, Grid, TextField, Toolbar } from "@mui/material";
 
-import { getCookie, handleLogout } from './utils.js';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { v4 as uuidv4 } from 'uuid';
+import { getCookie } from './utils.js';
 
 const theme = createTheme();
 
@@ -35,6 +37,7 @@ export default function CreateNetPage(props) {
     const [weightDecay, setWeightDecay] = useState(0);
     const [batch, setBatch] = useState(0);
     const [error, setError] = useState(null);
+    const [isTraining, setIsTraining] = useState(false);
 
     useEffect(() => {
         fetch("/api/create", {
@@ -52,6 +55,19 @@ export default function CreateNetPage(props) {
         .then((data) => setUser(data.user))
         .catch((error) => console.log(error));
     }, [navigate]);
+
+    const handleLogout = () => {
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                'X-CSRFToken': getCookie("csrftoken"),
+            },
+        }
+        fetch("/api/logout", requestOptions)
+        .then(() => {
+            navigate("/");
+        });
+    }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -72,6 +88,7 @@ export default function CreateNetPage(props) {
     }
 
     const startTraining = () => {
+        setIsTraining(true);
         try {
             const requestOptions = {
                 method: "POST",
@@ -89,10 +106,16 @@ export default function CreateNetPage(props) {
                 return response.json();
             })
             .then((data) => {
+                setIsTraining(false);
                 navigate("/dashboard", { state: data });
+            })
+            .catch((err) => {
+                setIsTraining(false);
+                setError(err.message);
             });
 
         } catch(err) {
+            setIsTraining(false);
             setError(err.message);
         }
     }
@@ -295,6 +318,12 @@ export default function CreateNetPage(props) {
                             <Button variant="contained" color="primary" type="submit">
                                 Start training
                             </Button>
+                            <Backdrop
+                                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                                open={isTraining}
+                            >
+                                <CircularProgress color="inherit" />
+                            </Backdrop>
                             {error && (
                                 <Typography color="error" variant="body2">
                                     {error}
